@@ -1,0 +1,102 @@
+/* The page around the player in the preview frame. Your skin lives in the project's src/ folder. */
+:root {
+  color-scheme: light dark;
+}
+
+body {
+  margin: 0;
+  background: light-dark(#ffffff, #0a0a0a);
+}
+
+.preview-page {
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.preview-player {
+  width: 100%;
+  max-width: var(--preview-player-width, 56rem);
+}
+
+/* The aspect ratio option overrides the skin's own; `auto` lets the media's intrinsic size decide. */
+.preview-player[style*="--preview-player-ratio"] .media-skin {
+  aspect-ratio: var(--preview-player-ratio);
+}
+
+/* Player elements only provide state; the skin inside them is the box that gets sized. */
+media-i18n,
+video-player,
+live-video-player,
+audio-player,
+live-audio-player {
+  display: contents;
+}
+
+/* =============================================================================================================
+   Video picker and credit line, under the player. Kept plain so the skin stays the one bold element.
+   ============================================================================================================= */
+
+.clip-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.clip-button {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid light-dark(rgb(0 0 0 / 0.2), rgb(255 255 255 / 0.2));
+  border-radius: 8px;
+  background: transparent;
+  color: light-dark(#111111, #f4f4f5);
+  font-family: var(--media-font-family, Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif);
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+.clip-button:hover {
+  background: light-dark(rgb(0 0 0 / 0.06), rgb(255 255 255 / 0.1));
+}
+
+.clip-button[aria-pressed="true"] {
+  border-color: transparent;
+  background: light-dark(#111111, #f4f4f5);
+  color: light-dark(#ffffff, #111111);
+}
+
+.clip-button:focus-visible,
+.clip-credit a:focus-visible {
+  outline: 2px solid light-dark(#111111, #f4f4f5);
+  outline-offset: 2px;
+}
+
+.clip-credit {
+  margin: 12px 0 0;
+  font-family: var(--media-font-family, Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif);
+  font-size: 12px;
+  line-height: 1.5;
+  color: light-dark(#52525b, #a1a1aa);
+}
+
+.clip-credit a {
+  color: inherit;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .clip-button {
+    transition: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .clip-button[aria-pressed="true"] {
+    border-color: Highlight;
+    background: Highlight;
+    color: HighlightText;
+  }
+}

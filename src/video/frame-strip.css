@@ -1,0 +1,823 @@
+/*
+ * Frame Strip: restyle layer on top of the Scaffold skin.
+ *
+ * This file is deliberately NOT inside an @layer. Unlayered rules beat the layered Scaffold rules in skin.css,
+ * so nothing in skin.css needs editing. Delete this file (and its import in skin.ts) to get plain Scaffold back.
+ *
+ * Public properties you can set on the player (or any parent):
+ *   --media-accent-color        the one accent colour (played fill, focus ring)
+ *   --media-accent-text-color   text on the accent (otherwise picked with contrast-color(), with a fallback)
+ *   --media-border-radius       player corner radius (default 16px)
+ *   --media-font-family         font (default Inter, then the system UI stack; nothing is downloaded)
+ */
+
+.media-skin[data-theme="scaffold"][data-preset="video"] {
+  /* ---- tokens ---------------------------------------------------------------------------------------------- */
+  --fs-surface: rgb(0 0 0 / 0.64);
+  --fs-surface-solid: rgb(14 14 16);
+  --fs-hairline: rgb(255 255 255 / 0.12);
+  --fs-hover: rgb(255 255 255 / 0.14);
+  --fs-track: rgb(255 255 255 / 0.28);
+  --fs-buffer: rgb(255 255 255 / 0.45);
+  --fs-text-soft: rgb(255 255 255 / 0.78);
+
+  /* Nested radii: outer = inner + padding. Buttons 8 + row padding 6 = row 14. */
+  --fs-row-padding: 6px;
+  --fs-button-radius: 8px;
+  --fs-row-radius: calc(var(--fs-button-radius) + var(--fs-row-padding));
+  --fs-hit: 44px;
+
+  /* Layered, low-opacity shadows: a fine edge plus soft depth. */
+  --fs-shadow:
+    0 0 0 1px rgb(0 0 0 / 0.35),
+    0 1px 2px rgb(0 0 0 / 0.2),
+    0 6px 16px -2px rgb(0 0 0 / 0.28),
+    0 18px 36px -12px rgb(0 0 0 / 0.3);
+
+  --media-default-accent-color: #6aa6ff;
+  --media-video-border-radius: var(--media-border-radius, 16px);
+  --media-popover: rgb(20 20 23 / 0.94);
+  --media-popover-foreground: #fff;
+  --media-ring: var(--media-accent-color, var(--media-default-accent-color));
+  --media-menu-item-radius: var(--fs-button-radius);
+  --media-popup-radius: var(--fs-row-radius);
+  --media-duration-menu: 160ms;
+  --media-spinner-animation: spin 1s linear infinite;
+
+  font-family: var(--media-font-family, Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif);
+}
+
+@supports (color: oklch(0.7 0.1 250)) {
+  .media-skin[data-theme="scaffold"][data-preset="video"] {
+    --media-default-accent-color: oklch(0.76 0.13 250);
+    --fs-surface: oklch(0 0 0 / 0.64);
+    --fs-hairline: oklch(1 0 0 / 0.12);
+    --fs-hover: oklch(1 0 0 / 0.14);
+    --fs-track: oklch(1 0 0 / 0.28);
+    --fs-buffer: oklch(1 0 0 / 0.45);
+    --fs-text-soft: oklch(1 0 0 / 0.78);
+  }
+}
+
+/* Text on the accent: the browser picks black or white when it can; otherwise black (the accent is light). */
+@supports (color: contrast-color(red)) {
+  .media-skin[data-theme="scaffold"][data-preset="video"] {
+    --media-accent-foreground: var(--media-accent-text-color, contrast-color(var(--media-accent)));
+    --media-primary-foreground: var(--media-accent-text-color, contrast-color(var(--media-accent)));
+  }
+}
+
+/* =============================================================================================================
+   Surfaces
+   ============================================================================================================= */
+
+@media (forced-colors: none) {
+  /* Bottom scrim: at least 60% black behind the control row so white text holds over bright footage. */
+  .media-skin[data-theme="scaffold"][data-preset="video"] .video-controls-backdrop {
+    background-image: linear-gradient(
+      to top,
+      rgb(0 0 0 / 0.72),
+      rgb(0 0 0 / 0.4) 22%,
+      rgb(0 0 0 / 0.12) 45%,
+      transparent 62%,
+      rgb(0 0 0 / 0.28)
+    );
+  }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"] .video-controls-bottom {
+    background-color: var(--fs-surface);
+    border-radius: var(--fs-row-radius);
+    box-shadow: var(--fs-shadow), inset 0 0 0 1px var(--fs-hairline), inset 0 1px 0 0 rgb(255 255 255 / 0.08);
+    -webkit-backdrop-filter: blur(10px) saturate(120%);
+    backdrop-filter: blur(10px) saturate(120%);
+  }
+}
+
+/* Position and layout of the row. The slider sits between the time and the buttons, as in the mockup. */
+.media-skin[data-theme="scaffold"][data-preset="video"] .video-controls-bottom {
+  inset-inline: 12px;
+  bottom: 12px;
+  padding: var(--fs-row-padding);
+  gap: 4px;
+  flex-direction: row;
+  align-items: center;
+}
+
+/* Flatten the groups so every control becomes a direct item of the row, then order them. */
+.media-skin[data-theme="scaffold"][data-preset="video"]
+  :is(.video-controls-row, .video-controls-bottom .video-controls-group, .media-time-group) {
+  display: contents;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .video-controls-bottom .media-play-button { order: 1; }
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-time-current-value { order: 2; }
+.media-skin[data-theme="scaffold"][data-preset="video"] .video-controls-slider-row { order: 3; flex: 1 1 0%; width: 0; min-width: 0; }
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-time-duration-value { order: 4; }
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-mute-button { order: 5; }
+.media-skin[data-theme="scaffold"][data-preset="video"] .video-controls-bottom .media-captions-button { order: 6; }
+.media-skin[data-theme="scaffold"][data-preset="video"] .video-controls-bottom .media-button:not(.media-play-button):not(.media-mute-button):not(.media-captions-button):not(.media-fullscreen-button) { order: 7; }
+.media-skin[data-theme="scaffold"][data-preset="video"] .video-controls-bottom .media-fullscreen-button { order: 8; }
+
+/* The elapsed/remaining toggle and the separator are not part of this layout; the sample mockup shows both ends. */
+.media-skin[data-theme="scaffold"][data-preset="video"] :is(.media-time-toggle, .media-time-separator) {
+  display: none !important;
+}
+
+/* The big centre buttons are not in the design; tapping the picture still plays and pauses. */
+.media-skin[data-theme="scaffold"][data-preset="video"] .video-controls-center {
+  display: none !important;
+}
+
+/* =============================================================================================================
+   Controls and type
+   ============================================================================================================= */
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-button {
+  width: var(--fs-hit);
+  height: var(--fs-hit);
+  border-radius: var(--fs-button-radius);
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] :is(.media-button-icon, .media-button-icon-base) {
+  width: 20px;
+  height: 20px;
+}
+
+/* Optical centring: a triangle looks left-heavy in a box, so nudge it right a touch. Check by eye. */
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-play-button-play-icon {
+  transform: translateX(1px);
+}
+
+@media (forced-colors: none) {
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-button {
+    background-color: transparent;
+    transition: background-color var(--media-duration-fast, 100ms) ease;
+  }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"] .video-controls-bottom .media-play-button {
+    background-color: var(--fs-hover);
+  }
+
+  @media (hover: hover) {
+    .media-skin[data-theme="scaffold"][data-preset="video"] .media-button:hover {
+      background-color: var(--fs-hover);
+    }
+  }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-button:focus-visible,
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-button[aria-expanded="true"] {
+    background-color: var(--fs-hover);
+  }
+
+  /* Buttons at the top (narrow layout) sit straight on the picture, so they get their own dark surface. */
+  .media-skin[data-theme="scaffold"][data-preset="video"] .video-controls-top .media-button {
+    background-color: var(--fs-surface);
+    box-shadow: inset 0 0 0 1px var(--fs-hairline);
+  }
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-button:focus-visible {
+  outline: 2px solid var(--media-ring);
+  outline-offset: 2px;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] :is(.media-time-current-value, .media-time-duration-value) {
+  display: inline;
+  font-size: 13px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  padding-inline: 6px;
+  white-space: nowrap;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-time-duration-value {
+  opacity: 1;
+  color: var(--fs-text-soft);
+}
+
+/* Title chip, top left. */
+.media-skin[data-theme="scaffold"][data-preset="video"] .video-controls-top {
+  padding: 12px;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-title {
+  flex: 0 1 auto;
+  margin-inline-end: auto;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 5px 10px;
+  border-radius: 99px;
+  background-color: var(--fs-surface);
+  box-shadow: inset 0 0 0 1px var(--fs-hairline);
+}
+
+/* =============================================================================================================
+   The seek track and the strip
+   ============================================================================================================= */
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider {
+  height: var(--fs-hit);
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider-track {
+  height: 4px;
+  transition: height var(--media-duration, 150ms) ease;
+}
+
+/* Hover (mouse), keyboard focus or drag grows the track. */
+@media (hover: hover) {
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider[data-pointing] .media-time-slider-track {
+    height: 8px;
+  }
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider:is([data-dragging], :focus-within) .media-time-slider-track {
+  height: 8px;
+}
+
+/* Chapter breaks: each chapter is its own segment, so the gap between segments is the tick. */
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider-chapter {
+  --media-chapter-inset-start: 0.75;
+  --media-chapter-inset-end: 0.75;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider-chapter:first-of-type { --media-chapter-inset-start: 0; }
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider-chapter:last-of-type { --media-chapter-inset-end: 0; }
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider-track::before,
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider-buffer,
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider-fill {
+  border-radius: 99px;
+}
+
+@media (forced-colors: none) {
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider-track::before {
+    background-color: var(--fs-track);
+  }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider-buffer {
+    background-color: var(--fs-buffer);
+  }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider-fill {
+    background-color: var(--media-accent);
+  }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider-thumb {
+    width: 14px;
+    height: 14px;
+    border: 0;
+    border-radius: 50%;
+    background-color: #fff;
+    box-shadow: 0 0 0 1px rgb(0 0 0 / 0.2), 0 1px 3px rgb(0 0 0 / 0.4), 0 2px 6px -1px rgb(0 0 0 / 0.35);
+    transition: transform var(--media-duration-fast, 100ms) ease;
+  }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider[data-dragging] .media-time-slider-thumb {
+    transform: translateX(-50%) scale(1.25);
+  }
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider-thumb:focus-visible {
+  outline: 2px solid var(--media-ring);
+  outline-offset: 3px;
+}
+
+/* ---- the preview floating above the strip ---------------------------------------------------------------- */
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider-preview {
+  bottom: calc(100% + 14px);
+  max-width: 200px;
+  gap: 0;
+  display: grid;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-slider-thumbnail {
+  grid-area: 1 / 1;
+  width: 200px;
+  max-width: 200px;
+  border-radius: 12px;
+  background-color: #000;
+}
+
+@media (forced-colors: none) {
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-slider-thumbnail {
+    box-shadow: 0 0 0 1px rgb(255 255 255 / 0.5), var(--fs-shadow);
+  }
+}
+
+/* Time and chapter title sit on the picture, bottom left. */
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider-preview-meta {
+  grid-area: 1 / 1;
+  align-self: end;
+  justify-self: start;
+  width: auto;
+  max-width: 100%;
+  padding: 8px;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider-preview-label {
+  gap: 6px;
+  padding: 3px 9px;
+  border-radius: 99px;
+  font-size: 12px;
+  line-height: 1.3;
+  background-color: rgb(0 0 0 / 0.72);
+  color: #fff;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider-chapter-title {
+  opacity: 1;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider-chapter-title::before {
+  content: "\00b7";
+  margin-inline-end: 6px;
+}
+
+/* The preview appears and disappears with a short, interruptible transition. */
+@media (prefers-reduced-motion: no-preference) {
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider-preview {
+    transition: opacity 120ms ease, translate 120ms ease;
+    translate: 0 4px;
+  }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider:is([data-dragging], [data-pointing]) .media-time-slider-preview {
+    translate: 0 0;
+  }
+}
+
+/* =============================================================================================================
+   Menus: open from their trigger, about 160ms in, about 100ms out
+   ============================================================================================================= */
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-menu-popup {
+  border-radius: var(--fs-row-radius);
+  min-width: 232px;
+  transform-origin: bottom right;
+}
+
+@media (forced-colors: none) {
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-menu-popup {
+    background-color: var(--media-popover);
+    box-shadow: var(--fs-shadow), inset 0 0 0 1px var(--fs-hairline);
+    -webkit-backdrop-filter: blur(10px) saturate(120%);
+    backdrop-filter: blur(10px) saturate(120%);
+  }
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-menu-content {
+  padding: var(--fs-row-padding);
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] :is(.media-menu-item, .media-menu-radio-item, .media-menu-back-item) {
+  min-height: var(--fs-hit);
+  border-radius: var(--fs-button-radius);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-popup {
+    transition-duration: 160ms;
+  }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-popup[data-ending-style] {
+    transition-duration: 100ms;
+  }
+}
+
+/* =============================================================================================================
+   Fitting the space: container query at 480px (30rem)
+   ============================================================================================================= */
+
+/* Wide: captions and fullscreen live in the bottom row. */
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-narrow-only { display: none; }
+
+@container media-root (width >= 30rem) {
+  .fs-wide-only { display: grid; }
+}
+
+/* Narrow: captions and fullscreen move to the top right, the volume slider hides (mute stays), the duration drops
+   out so the seek track keeps its room, and the strip grows only while dragging. */
+@container media-root (width < 30rem) {
+  .media-skin[data-theme="scaffold"][data-preset="video"] .fs-wide-only { display: none; }
+  .media-skin[data-theme="scaffold"][data-preset="video"] .fs-narrow-only { display: grid; }
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-time-duration-value { display: none; }
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-volume-popover-popup { display: none !important; }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"] .video-controls-bottom {
+    inset-inline: 8px;
+    bottom: 8px;
+  }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"] .video-controls-top {
+    padding: 8px;
+  }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider[data-pointing]:not([data-dragging], :focus-within) .media-time-slider-track {
+    height: 4px;
+  }
+}
+
+/* =============================================================================================================
+   Preferences
+   ============================================================================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .media-skin[data-theme="scaffold"][data-preset="video"] * {
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+    translate: none !important;
+    scale: none !important;
+  }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider[data-dragging] .media-time-slider-thumb {
+    transform: translateX(-50%);
+  }
+}
+
+/* Solid surfaces, no blur, clear edges. */
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .media-skin[data-theme="scaffold"][data-preset="video"] {
+    --fs-surface: var(--fs-surface-solid);
+    --fs-track: rgb(255 255 255 / 0.5);
+    --fs-buffer: rgb(255 255 255 / 0.75);
+    --fs-hairline: rgb(255 255 255 / 0.5);
+    --fs-text-soft: #fff;
+    --media-popover: var(--fs-surface-solid);
+  }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"] :is(.video-controls-bottom, .media-menu-popup) {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider-preview-label {
+    background-color: #000;
+  }
+}
+
+/* System colours for surfaces, focus and the slider. Scaffold already handles most of this; we add the rows we built. */
+@media (forced-colors: active) {
+  .media-skin[data-theme="scaffold"][data-preset="video"] .video-controls-bottom,
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-menu-popup,
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-title,
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider-preview-label {
+    background-color: Canvas;
+    color: CanvasText;
+    border: 1px solid CanvasText;
+    box-shadow: none;
+  }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-slider-thumbnail {
+    border: 1px solid CanvasText;
+  }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-button:focus-visible,
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider-thumb:focus-visible {
+    outline: 2px solid Highlight;
+  }
+}
+
+/* =============================================================================================================
+   Chapter colours: each chapter gets its own hue. The played part is bright, the part still to play is a dim tint of
+   the same hue. Eight hues repeat if a film has more chapters. Delete this block to go back to a single accent.
+   ============================================================================================================= */
+
+@media (forced-colors: none) {
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider-chapter:nth-of-type(8n + 1) { --fs-h: 250; }
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider-chapter:nth-of-type(8n + 2) { --fs-h: 200; }
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider-chapter:nth-of-type(8n + 3) { --fs-h: 155; }
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider-chapter:nth-of-type(8n + 4) { --fs-h: 100; }
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider-chapter:nth-of-type(8n + 5) { --fs-h: 60; }
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider-chapter:nth-of-type(8n + 6) { --fs-h: 20; }
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider-chapter:nth-of-type(8n + 7) { --fs-h: 340; }
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider-chapter:nth-of-type(8n + 8) { --fs-h: 295; }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider-chapter {
+    --fs-h: 250;
+    --fs-chapter-bright: oklch(0.78 0.14 var(--fs-h));
+    --fs-chapter-dim: oklch(0.62 0.08 var(--fs-h) / 0.6);
+  }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider-chapter .media-time-slider-fill {
+    background-color: var(--fs-chapter-bright);
+  }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider-chapter .media-time-slider-track::before {
+    background-color: var(--fs-chapter-dim);
+  }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider-chapter .media-time-slider-buffer {
+    background-color: oklch(0.7 0.1 var(--fs-h) / 0.75);
+  }
+}
+
+/* =============================================================================================================
+   The preview's outline takes the colour of the chapter under the pointer.
+   ============================================================================================================= */
+
+@media (forced-colors: none) {
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider:has(.media-time-slider-chapter:nth-of-type(8n + 1)[data-highlighted]) { --fs-preview-h: 250; }
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider:has(.media-time-slider-chapter:nth-of-type(8n + 2)[data-highlighted]) { --fs-preview-h: 200; }
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider:has(.media-time-slider-chapter:nth-of-type(8n + 3)[data-highlighted]) { --fs-preview-h: 155; }
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider:has(.media-time-slider-chapter:nth-of-type(8n + 4)[data-highlighted]) { --fs-preview-h: 100; }
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider:has(.media-time-slider-chapter:nth-of-type(8n + 5)[data-highlighted]) { --fs-preview-h: 60; }
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider:has(.media-time-slider-chapter:nth-of-type(8n + 6)[data-highlighted]) { --fs-preview-h: 20; }
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider:has(.media-time-slider-chapter:nth-of-type(8n + 7)[data-highlighted]) { --fs-preview-h: 340; }
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider:has(.media-time-slider-chapter:nth-of-type(8n + 8)[data-highlighted]) { --fs-preview-h: 295; }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-slider-thumbnail {
+    box-shadow: 0 0 0 2px oklch(0.78 0.14 var(--fs-preview-h, 250)), var(--fs-shadow);
+  }
+}
+
+/* =============================================================================================================
+   Volume: a rounded panel that matches the menu, a thin round track, accent fill and a round thumb.
+   ============================================================================================================= */
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-volume-popover-popup {
+  width: var(--fs-hit);
+  height: 136px;
+  padding: 14px 0;
+  border-radius: var(--fs-row-radius);
+  transform-origin: bottom;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-volume-slider-track {
+  width: 4px;
+  border-radius: 99px;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-volume-slider-fill {
+  border-radius: 99px;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-volume-slider-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-volume-slider-thumb:focus-visible {
+  outline: 2px solid var(--media-ring);
+  outline-offset: 3px;
+}
+
+@media (forced-colors: none) {
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-volume-popover-popup {
+    background-color: var(--media-popover);
+    box-shadow: var(--fs-shadow), inset 0 0 0 1px var(--fs-hairline);
+    -webkit-backdrop-filter: blur(10px) saturate(120%);
+    backdrop-filter: blur(10px) saturate(120%);
+  }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-volume-slider-track {
+    background-color: var(--fs-track);
+  }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-volume-slider-fill {
+    background-color: var(--media-accent-color, var(--media-default-accent-color));
+  }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-volume-slider-thumb {
+    background-color: #fff;
+    box-shadow: 0 0 0 1px rgb(0 0 0 / 0.2), 0 1px 3px rgb(0 0 0 / 0.4), 0 2px 6px -1px rgb(0 0 0 / 0.35);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-volume-popover-popup {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+/* Volume, refinement: sit close to the button, share the control bar's surface, a sturdier track. */
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-volume-popover-popup {
+  --media-popover-side-offset: 10px;
+  --media-popup-side-offset: 10px;
+  height: 124px;
+  padding: 16px 0;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-volume-slider-track {
+  width: 6px;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-volume-slider-thumb {
+  width: 16px;
+  height: 16px;
+}
+
+@media (forced-colors: none) {
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-volume-popover-popup {
+    background-color: var(--fs-surface);
+  }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-volume-slider-thumb {
+    box-shadow: 0 0 0 3px oklch(0 0 0 / 0.35), 0 1px 3px rgb(0 0 0 / 0.4);
+  }
+}
+
+/* Volume bar colors: same scheme as the seek bar chapters (bright fill, dim tint of the same hue).
+   Change 340 in the three places below to try another hue (200 teal, 155 green, 60 yellow, 20 orange, 295 purple). */
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-volume-popover-popup {
+  --media-accent-color: oklch(0.78 0.14 340);
+  --media-default-accent-color: oklch(0.78 0.14 340);
+}
+
+@media (forced-colors: none) {
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-volume-slider-fill {
+    background: oklch(0.78 0.14 340) !important;
+  }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-volume-slider-track {
+    background: oklch(0.62 0.08 340 / 0.6) !important;
+  }
+}
+
+/* =============================================================================================================
+   Unplayed chapter tint: a little stronger so the whole bar reads over bright and dark footage.
+   To go back, delete this block. Same hues and the same look, only the dim tint changes.
+   ============================================================================================================= */
+
+@media (forced-colors: none) {
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider-chapter {
+    --fs-chapter-dim: oklch(0.7 0.09 var(--fs-h) / 0.7);
+  }
+}
+
+/* The chapter colours above ignore the contrast preference, so give "more contrast" its own stronger tint. */
+@media (prefers-contrast: more) and (forced-colors: none) {
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider-chapter {
+    --fs-chapter-dim: oklch(0.66 0.09 var(--fs-h) / 0.95);
+  }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-volume-slider-track {
+    background: oklch(0.66 0.09 340 / 0.95) !important;
+  }
+}
+
+/* =============================================================================================================
+   Captions only when there are captions. The button (bottom row and narrow top row) and the Settings row show only
+   for a video that has a captions or subtitles track. Video.js marks the ones that are not available; these rules
+   keep them out of the layout even where a rule above gives their slot a display value.
+   ============================================================================================================= */
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-captions-button:is([hidden], [data-availability="unavailable"], [data-availability="unsupported"]) {
+  display: none !important;
+}
+
+/* =============================================================================================================
+   Accessibility palette. Colour is never the only cue: neighbouring chapters also differ in lightness, so they stay
+   apart for people with colour-blindness, and the gaps between segments mark where each one starts.
+   Checked by calculation against the control bar over white footage (the hardest case):
+   played part 4.4:1 or better, unplayed part 3.1:1 or better (WCAG asks 3:1 for interface parts).
+   Delete this block to go back to the single-lightness palette.
+   ============================================================================================================= */
+
+/* A slightly deeper control bar, so the worst case (bright footage) still holds. Skipped when the person asks for
+   solid surfaces, which already give more. */
+@media (prefers-reduced-transparency: no-preference) and (prefers-contrast: no-preference) {
+  .media-skin[data-theme="scaffold"][data-preset="video"] {
+    --fs-surface: rgb(0 0 0 / 0.78);
+  }
+}
+
+@supports (color: oklch(0.7 0.1 250)) {
+  @media (prefers-reduced-transparency: no-preference) and (prefers-contrast: no-preference) {
+    .media-skin[data-theme="scaffold"][data-preset="video"] {
+      --fs-surface: oklch(0 0 0 / 0.78);
+    }
+  }
+}
+
+@media (forced-colors: none) {
+  /* Odd chapters light, even chapters a step deeper. */
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider-chapter:nth-of-type(odd) {
+    --fs-chapter-bright: oklch(0.88 0.14 var(--fs-h));
+    --fs-chapter-dim: oklch(0.76 0.09 var(--fs-h) / 0.85);
+  }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider-chapter:nth-of-type(even) {
+    --fs-chapter-bright: oklch(0.72 0.14 var(--fs-h));
+    --fs-chapter-dim: oklch(0.62 0.09 var(--fs-h));
+  }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-volume-slider-track {
+    background: oklch(0.62 0.09 340) !important;
+  }
+}
+
+@media (prefers-contrast: more) and (forced-colors: none) {
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider-chapter:nth-of-type(odd) {
+    --fs-chapter-dim: oklch(0.74 0.09 var(--fs-h));
+  }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider-chapter:nth-of-type(even) {
+    --fs-chapter-dim: oklch(0.64 0.09 var(--fs-h));
+  }
+}
+
+/* =============================================================================================================
+   Accessibility mode. Off by default, so the normal look is untouched. Turn it on by putting `data-a11y` on the
+   .media-skin element. What it changes:
+   - bigger targets (56px, 48px when the player is narrow) and bigger icons and text
+   - the strip tells played from unplayed without colour: played is solid, unplayed is striped
+   - chapter gaps are wider, so each start is easier to see and to hit
+   - solid surfaces, no blur, and a thicker focus ring with a dark halo
+   - no sliding or fading (the preview still appears, it just doesn't move)
+   Not here yet: keeping the controls visible and turning off the single-key hotkeys. Both need Video.js settings.
+   ============================================================================================================= */
+
+.media-skin[data-theme="scaffold"][data-preset="video"][data-a11y] {
+  --fs-hit: 56px;
+  --fs-surface: var(--fs-surface-solid);
+  --fs-hairline: rgb(255 255 255 / 0.5);
+  --fs-text-soft: #fff;
+  --media-popover: var(--fs-surface-solid);
+}
+
+@container media-root (width < 30rem) {
+  .media-skin[data-theme="scaffold"][data-preset="video"][data-a11y] {
+    --fs-hit: 48px;
+  }
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"][data-a11y] :is(.media-button-icon, .media-button-icon-base) {
+  width: 24px;
+  height: 24px;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"][data-a11y] :is(.media-time-current-value, .media-time-duration-value) {
+  font-size: 16px;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"][data-a11y] .media-title {
+  font-size: 14px;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"][data-a11y] .media-time-slider-preview-label {
+  font-size: 14px;
+  background-color: #000;
+}
+
+@media (forced-colors: none) {
+  .media-skin[data-theme="scaffold"][data-preset="video"][data-a11y] :is(.video-controls-bottom, .media-menu-popup, .media-volume-popover-popup) {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  /* A thicker track at rest; it still grows on hover, focus and drag. */
+  .media-skin[data-theme="scaffold"][data-preset="video"][data-a11y] .media-time-slider-track {
+    height: 8px;
+  }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"][data-a11y] .media-time-slider:is([data-dragging], :focus-within) .media-time-slider-track {
+    height: 12px;
+  }
+
+  @media (hover: hover) {
+    .media-skin[data-theme="scaffold"][data-preset="video"][data-a11y] .media-time-slider[data-pointing] .media-time-slider-track {
+      height: 12px;
+    }
+  }
+
+  /* Not colour alone: the part still to play is striped, the played part is solid. */
+  .media-skin[data-theme="scaffold"][data-preset="video"][data-a11y] .media-time-slider-chapter .media-time-slider-track::before {
+    background-image: repeating-linear-gradient(90deg, transparent 0 3px, rgb(0 0 0 / 0.55) 3px 5px);
+  }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"][data-a11y] .media-time-slider-thumb {
+    width: 20px;
+    height: 20px;
+  }
+
+  /* A focus ring that holds over any picture: a thick light ring with a dark halo. */
+  .media-skin[data-theme="scaffold"][data-preset="video"][data-a11y] :is(.media-button, .media-time-slider-thumb, .media-volume-slider-thumb, .media-menu-item, .media-menu-radio-item, .media-menu-back-item):focus-visible {
+    outline: 3px solid #fff;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 6px rgb(0 0 0 / 0.9);
+  }
+}
+
+/* Wider gaps between chapters, so each start is a clear break. */
+.media-skin[data-theme="scaffold"][data-preset="video"][data-a11y] .media-time-slider-chapter {
+  --media-chapter-inset-start: 1.5;
+  --media-chapter-inset-end: 1.5;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"][data-a11y] .media-time-slider-chapter:first-of-type { --media-chapter-inset-start: 0; }
+.media-skin[data-theme="scaffold"][data-preset="video"][data-a11y] .media-time-slider-chapter:last-of-type { --media-chapter-inset-end: 0; }
+
+/* No movement: the preview appears in place. */
+.media-skin[data-theme="scaffold"][data-preset="video"][data-a11y] * {
+  transition-duration: 0ms !important;
+  animation-duration: 0ms !important;
+  translate: none !important;
+  scale: none !important;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"][data-a11y] .media-time-slider[data-dragging] .media-time-slider-thumb {
+  transform: translateX(-50%);
+}
