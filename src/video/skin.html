@@ -29,6 +29,16 @@
 <media-controls-group class="video-controls-top">
 <media-title class="media-title">
 </media-title>
+<button type="button" class="media-button fs-open fs-top-open fs-wide-only" data-fs-open="sheet" aria-label="Browse frames">
+<media-icon family="scaffold" name="frames" class="media-button-icon">
+</media-icon>
+<span class="fs-top-label">Frames</span>
+</button>
+<button type="button" class="media-button fs-open fs-top-open fs-wide-only" data-fs-open="display" aria-label="Display options">
+<media-icon family="scaffold" name="display" class="media-button-icon">
+</media-icon>
+<span class="fs-top-label">Display</span>
+</button>
 <media-captions-button class="media-button media-captions-button fs-narrow-only" id="fs-cc-top">
 <media-icon family="scaffold" name="captions-off" class="media-button-icon media-captions-button-off-icon">
 </media-icon>
@@ -128,6 +138,8 @@
 </div>
 </div>
 </media-slider-preview>
+<fs-frame-strip class="media-frame-strip" aria-hidden="true">
+</fs-frame-strip>
 </media-time-slider>
 </div>
 <media-controls-group class="video-controls-row">
@@ -141,6 +153,32 @@
 </media-icon>
 </media-play-button>
 <media-tooltip trigger="vjs-COsQCb_P-0-8-trigger" side="top" class="media-popup media-popup-safe-area media-tooltip-popup">
+<media-tooltip-label>
+</media-tooltip-label>
+<media-tooltip-shortcut class="media-tooltip-shortcut">
+</media-tooltip-shortcut>
+</media-tooltip>
+<media-seek-button seconds="-10" class="media-button fs-skip" id="fs-skip-back">
+<div class="media-seek-button-content">
+<media-icon family="scaffold" name="seek" class="media-button-icon media-seek-button-backward-icon">
+</media-icon>
+<span class="media-seek-button-label media-seek-button-backward-label">10</span>
+</div>
+</media-seek-button>
+<media-tooltip trigger="fs-skip-back" side="top" class="media-popup media-popup-safe-area media-tooltip-popup">
+<media-tooltip-label>
+</media-tooltip-label>
+<media-tooltip-shortcut class="media-tooltip-shortcut">
+</media-tooltip-shortcut>
+</media-tooltip>
+<media-seek-button seconds="10" class="media-button fs-skip" id="fs-skip-forward">
+<div class="media-seek-button-content">
+<media-icon family="scaffold" name="seek" class="media-button-icon">
+</media-icon>
+<span class="media-seek-button-label media-seek-button-forward-label">10</span>
+</div>
+</media-seek-button>
+<media-tooltip trigger="fs-skip-forward" side="top" class="media-popup media-popup-safe-area media-tooltip-popup">
 <media-tooltip-label>
 </media-tooltip-label>
 <media-tooltip-shortcut class="media-tooltip-shortcut">
@@ -338,6 +376,16 @@
 </template>
 </media-captions-radio-group>
 </media-menu-content>
+<media-menu-item class="media-menu-item fs-menu-narrow" data-fs-open="display">
+<media-icon family="scaffold" name="display" class="media-menu-trigger-icon">
+</media-icon>
+<span>Display</span>
+</media-menu-item>
+<media-menu-item class="media-menu-item fs-menu-narrow" data-fs-open="sheet">
+<media-icon family="scaffold" name="frames" class="media-menu-trigger-icon">
+</media-icon>
+<span>Browse frames</span>
+</media-menu-item>
 </media-menu-content>
 </media-menu>
 <media-fullscreen-button class="media-button media-fullscreen-button fs-wide-only" id="fs-bottom-trigger">
@@ -440,4 +488,147 @@
 </media-seek-indicator-value>
 </media-seek-indicator>
 </div>
+<fs-display-panel class="fs-overlay" hidden>
+<div class="fs-scrim" data-fs-scrim>
+</div>
+<div class="fs-panel" role="dialog" aria-modal="true" aria-labelledby="fs-panel-title">
+<div class="fs-panel-head">
+<h2 class="fs-panel-title" id="fs-panel-title" tabindex="-1" data-fs-title>Display</h2>
+<button type="button" class="fs-done" data-fs-close>Done</button>
+</div>
+<p class="fs-panel-note">Pick what helps. Changes apply straight away and are kept on this device.</p>
+<div class="fs-rainbow-wrap">
+<div class="fs-rainbow" data-fs-rainbow aria-hidden="true">
+</div>
+<p class="fs-rainbow-caption">Your chapters, as the seek bar shows them. They change with the options below.</p>
+</div>
+<div class="fs-presets" role="group" aria-label="Quick presets">
+<button type="button" class="fs-preset" data-fs-preset="low-vision">Low vision</button>
+<button type="button" class="fs-preset" data-fs-preset="colour-blind">Colour-blind</button>
+<button type="button" class="fs-preset" data-fs-preset="light-sensitive">Light-sensitive</button>
+<button type="button" class="fs-preset" data-fs-preset="easier-to-press">Easier to press</button>
+</div>
+<h3 class="fs-group-title">Look</h3>
+<div class="fs-reel" role="group" aria-label="Look">
+<button type="button" class="fs-tile" data-slot="1" role="checkbox" aria-checked="false" data-fs-option="high-visibility" data-sample="hv">
+<span class="fs-tile-frame">
+<span class="fs-tile-picture"></span>
+<span class="fs-tile-sample" aria-hidden="true"><i>1</i><i>2</i><i>3</i></span>
+</span>
+<span class="fs-tile-name">High visibility</span>
+<span class="fs-tile-hint">Bold chapter marks and strong outlines</span>
+<span class="fs-tile-state" data-fs-state>Off</span>
+</button>
+<button type="button" class="fs-tile" data-slot="2" role="checkbox" aria-checked="false" data-fs-option="colour-blind" data-sample="cb">
+<span class="fs-tile-frame">
+<span class="fs-tile-picture"></span>
+<span class="fs-tile-sample" aria-hidden="true"><i>1</i><i>2</i><i>3</i><i>4</i></span>
+</span>
+<span class="fs-tile-name">Colour-blind friendly</span>
+<span class="fs-tile-hint">Chapter numbers and patterns under the bar</span>
+<span class="fs-tile-state" data-fs-state>Off</span>
+</button>
+<button type="button" class="fs-tile" data-slot="3" role="checkbox" aria-checked="false" data-fs-option="bigger-controls" data-sample="large">
+<span class="fs-tile-frame">
+<span class="fs-tile-picture"></span>
+<span class="fs-tile-sample" aria-hidden="true"><i>▶</i><i>↺</i></span>
+</span>
+<span class="fs-tile-name">Bigger controls</span>
+<span class="fs-tile-hint">Larger buttons, text and seek bar</span>
+<span class="fs-tile-state" data-fs-state>Off</span>
+</button>
+<button type="button" class="fs-tile" data-slot="4" role="checkbox" aria-checked="false" data-fs-option="dim-screen" data-sample="dim">
+<span class="fs-tile-frame">
+<span class="fs-tile-picture"></span>
+<span class="fs-tile-sample" aria-hidden="true"></span>
+</span>
+<span class="fs-tile-name">Dim screen</span>
+<span class="fs-tile-hint">Darker picture, softer controls</span>
+<span class="fs-tile-state" data-fs-state>Off</span>
+</button>
+</div>
+<h3 class="fs-group-title">Colour filter</h3>
+<div class="fs-reel" role="group" aria-label="Colour filter">
+<button type="button" class="fs-tile" data-slot="5" role="checkbox" aria-checked="false" data-fs-filter="protan" data-sample="protan">
+<span class="fs-tile-frame">
+<span class="fs-tile-picture"></span>
+<span class="fs-tile-sample" aria-hidden="true"></span>
+</span>
+<span class="fs-tile-name">Red-weak filter</span>
+<span class="fs-tile-hint">For red-weak vision (protanopia)</span>
+<span class="fs-tile-state" data-fs-state>Off</span>
+</button>
+<button type="button" class="fs-tile" data-slot="6" role="checkbox" aria-checked="false" data-fs-filter="deutan" data-sample="deutan">
+<span class="fs-tile-frame">
+<span class="fs-tile-picture"></span>
+<span class="fs-tile-sample" aria-hidden="true"></span>
+</span>
+<span class="fs-tile-name">Green-weak filter</span>
+<span class="fs-tile-hint">For green-weak vision (deuteranopia)</span>
+<span class="fs-tile-state" data-fs-state>Off</span>
+</button>
+<button type="button" class="fs-tile" data-slot="7" role="checkbox" aria-checked="false" data-fs-filter="tritan" data-sample="tritan">
+<span class="fs-tile-frame">
+<span class="fs-tile-picture"></span>
+<span class="fs-tile-sample" aria-hidden="true"></span>
+</span>
+<span class="fs-tile-name">Blue-weak filter</span>
+<span class="fs-tile-hint">For blue-weak vision (tritanopia)</span>
+<span class="fs-tile-state" data-fs-state>Off</span>
+</button>
+</div>
+<h3 class="fs-group-title">Move and motion</h3>
+<div class="fs-reel" role="group" aria-label="Move and motion">
+<button type="button" class="fs-tile" data-slot="8" role="checkbox" aria-checked="false" data-fs-option="skip-buttons" data-sample="skip">
+<span class="fs-tile-frame">
+<span class="fs-tile-picture"></span>
+<span class="fs-tile-sample" aria-hidden="true"><i>−10</i><i>+10</i></span>
+</span>
+<span class="fs-tile-name">Skip buttons</span>
+<span class="fs-tile-hint">Back and forward 10 seconds</span>
+<span class="fs-tile-state" data-fs-state>Off</span>
+</button>
+<button type="button" class="fs-tile" data-slot="1" role="checkbox" aria-checked="false" data-fs-option="calm-motion" data-sample="calm">
+<span class="fs-tile-frame">
+<span class="fs-tile-picture"></span>
+<span class="fs-tile-sample" aria-hidden="true"><i>Still</i></span>
+</span>
+<span class="fs-tile-name">Calm motion</span>
+<span class="fs-tile-hint">No sliding, fading or growing</span>
+<span class="fs-tile-state" data-fs-state>Off</span>
+</button>
+<button type="button" class="fs-tile" data-slot="2" role="checkbox" aria-checked="false" data-fs-option="hide-previews" data-sample="nopreview">
+<span class="fs-tile-frame">
+<span class="fs-tile-picture"></span>
+<span class="fs-tile-sample" aria-hidden="true"><i>0:26</i></span>
+</span>
+<span class="fs-tile-name">Hide frame previews</span>
+<span class="fs-tile-hint">Time only when you scrub</span>
+<span class="fs-tile-state" data-fs-state>Off</span>
+</button>
+</div>
+<div class="fs-panel-foot">
+<button type="button" class="fs-reset" data-fs-option="reset">Back to my device settings</button>
+<p class="fs-panel-status" role="status" aria-live="polite" data-fs-status>
+</p>
+</div>
+</div>
+</fs-display-panel>
+<fs-contact-sheet class="fs-overlay" hidden>
+<div class="fs-scrim" data-fs-scrim>
+</div>
+<div class="fs-panel fs-sheet" role="dialog" aria-modal="true" aria-labelledby="fs-sheet-title">
+<div class="fs-panel-head">
+<h2 class="fs-panel-title" id="fs-sheet-title" tabindex="-1" data-fs-title>Browse frames</h2>
+<button type="button" class="fs-done" data-fs-close>Close</button>
+</div>
+<p class="fs-panel-note">Choose a frame to jump to that moment. Frames are grouped by chapter.</p>
+<div class="fs-sheet-body" data-fs-sheet-body>
+</div>
+</div>
+</fs-contact-sheet>
+<fs-display-options hidden>
+</fs-display-options>
+<fs-captions-state hidden>
+</fs-captions-state>
 </media-container>

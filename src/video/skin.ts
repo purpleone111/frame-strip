@@ -1,6 +1,11 @@
 import '../styles/video/scaffold.css';
 import './skin.css';
 import './frame-strip.css';
+import './frame-strip';
+import './display-options';
+import './display-panel';
+import './contact-sheet';
+import './captions-state';
 import { frameStripIcons } from './icons';
 import '@videojs/html/i18n';
 import '@videojs/html/ui/container';
@@ -74,22 +79,13 @@ import {
   castExitIcon as castExitIconScaffold,
   checkIcon as checkIconScaffold,
   chevronIcon as chevronIconScaffold,
-  fullscreenEnterIcon as fullscreenEnterIconScaffold,
-  fullscreenExitIcon as fullscreenExitIconScaffold,
-  gearIcon as gearIconScaffold,
-  pauseIcon as pauseIconScaffold,
   pipEnterIcon as pipEnterIconScaffold,
   pipExitIcon as pipExitIconScaffold,
-  playIcon as playIconScaffold,
-  restartIcon as restartIconScaffold,
   seekIcon as seekIconScaffold,
   speechIcon as speechIconScaffold,
   speedIcon as speedIconScaffold,
   spinnerIcon as spinnerIconScaffold,
   switchesIcon as switchesIconScaffold,
-  volumeHighIcon as volumeHighIconScaffold,
-  volumeLowIcon as volumeLowIconScaffold,
-  volumeOffIcon as volumeOffIconScaffold,
 } from '@videojs/html/icons/scaffold';
 
 registerIcons('scaffold', {
@@ -101,22 +97,14 @@ registerIcons('scaffold', {
   'cast-exit': castExitIconScaffold,
   check: checkIconScaffold,
   chevron: chevronIconScaffold,
-  'fullscreen-enter': fullscreenEnterIconScaffold,
-  'fullscreen-exit': fullscreenExitIconScaffold,
-  gear: gearIconScaffold,
-  pause: pauseIconScaffold,
   'pip-enter': pipEnterIconScaffold,
   'pip-exit': pipExitIconScaffold,
-  play: playIconScaffold,
-  restart: restartIconScaffold,
   seek: seekIconScaffold,
   speech: speechIconScaffold,
   speed: speedIconScaffold,
   spinner: spinnerIconScaffold,
   switches: switchesIconScaffold,
-  'volume-high': volumeHighIconScaffold,
-  'volume-low': volumeLowIconScaffold,
-  'volume-off': volumeOffIconScaffold,
-  // Frame Strip's own solid icons replace the Scaffold ones with the same names.
+  // Frame Strip's own solid icons (play, pause, restart, volume, fullscreen, settings) replace the Scaffold ones, so
+  // those are not listed above.
   ...frameStripIcons,
 });

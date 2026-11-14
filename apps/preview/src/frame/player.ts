@@ -12,6 +12,8 @@ export type Clip = {
   playbackId: string;
   /** Chapters track, served from `apps/preview/public`. Leave out for a plain seek bar. */
   chapters?: string;
+  /** Set to false when the video has no captions, so the captions button shows greyed out. */
+  captions?: boolean;
   /** Credit line shown under the player. */
   credit: string;
   creditUrl?: string;
@@ -28,6 +30,7 @@ export const CLIPS: readonly Clip[] = (
       title: 'Sweater Whether Teaser',
       playbackId: '5YgdV2ic9TKHQ6MdG8yCf9lceJjSWkayQXk01L013drbQ',
       chapters: './chapters.vtt',
+      captions: false,
       credit: 'Sweater Whether, teaser. Film by Abhi Tundel.',
     },
     {
@@ -106,6 +109,8 @@ export function createPlayer(clip: Clip = CLIPS[0]!): HTMLElement {
 
   player.setAttribute('poster', poster);
   player.setAttribute('content-title', clip.title);
+
+  if (clip.captions === false) player.setAttribute('data-no-captions', '');
 
   player.innerHTML = skinTemplate.replace(
     MEDIA_PLACEHOLDER,

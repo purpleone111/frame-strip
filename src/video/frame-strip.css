@@ -115,7 +115,8 @@
 .media-skin[data-theme="scaffold"][data-preset="video"] .media-time-duration-value { order: 4; }
 .media-skin[data-theme="scaffold"][data-preset="video"] .media-mute-button { order: 5; }
 .media-skin[data-theme="scaffold"][data-preset="video"] .video-controls-bottom .media-captions-button { order: 6; }
-.media-skin[data-theme="scaffold"][data-preset="video"] .video-controls-bottom .media-button:not(.media-play-button):not(.media-mute-button):not(.media-captions-button):not(.media-fullscreen-button) { order: 7; }
+.media-skin[data-theme="scaffold"][data-preset="video"] .video-controls-bottom .media-button:not(.media-play-button):not(.media-mute-button):not(.media-captions-button):not(.media-fullscreen-button):not(.fs-skip) { order: 7; }
+.media-skin[data-theme="scaffold"][data-preset="video"] .video-controls-bottom .fs-skip { order: 1; }
 .media-skin[data-theme="scaffold"][data-preset="video"] .video-controls-bottom .media-fullscreen-button { order: 8; }
 
 /* The elapsed/remaining toggle and the separator are not part of this layout; the sample mockup shows both ends. */
@@ -820,4 +821,1141 @@
 
 .media-skin[data-theme="scaffold"][data-preset="video"][data-a11y] .media-time-slider[data-dragging] .media-time-slider-thumb {
   transform: translateX(-50%);
+}
+
+/* =============================================================================================================
+   Frame strip: a row of frames above the seek bar while it is hovered, touched, dragged or keyboard-focused.
+   <fs-frame-strip> (frame-strip.ts) builds the frames and sets data-open. The single preview above is used instead
+   when the strip is closed: narrow players, no storyboard, or a seek bar too short for six frames.
+   ============================================================================================================= */
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-frame-strip {
+  position: absolute;
+  /* Line the frames up with the seek bar: the panel's padding sits outside it. */
+  inset-inline: calc(var(--fs-row-padding) * -1);
+  bottom: calc(100% + var(--fs-row-padding) + 12px);
+  z-index: 10;
+  padding: var(--fs-row-padding);
+  border-radius: var(--fs-row-radius);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Moving up from the seek bar crosses a gap; this keeps the strip open while the pointer does. */
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-frame-strip::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: 100%;
+  height: calc(var(--fs-row-padding) + 12px + 8px);
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-frame-strip[data-open] {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+@media (forced-colors: none) {
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-frame-strip {
+    background-color: var(--fs-surface);
+    box-shadow: var(--fs-shadow), inset 0 0 0 1px var(--fs-hairline);
+    -webkit-backdrop-filter: blur(10px) saturate(120%);
+    backdrop-filter: blur(10px) saturate(120%);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-frame-strip {
+    translate: 0 4px;
+    transition: opacity 120ms ease, translate 120ms ease, visibility 0s linear 120ms;
+  }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-frame-strip[data-open] {
+    translate: 0 0;
+    transition-delay: 0s;
+  }
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-frame-strip-frames {
+  display: flex;
+  gap: 4px;
+}
+
+/* The frames: each one a crop of the storyboard sprite sheet (size and position are set by frame-strip.ts). */
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-frame-strip-frame {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  aspect-ratio: var(--fs-tile-aspect, 16 / 9);
+  border-radius: var(--fs-button-radius);
+  background-color: #111;
+  background-repeat: no-repeat;
+  opacity: 0.72;
+}
+
+/* The current frame: a 2px white ring with a dark halo outside it, plus full opacity. Never colour alone. */
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-frame-strip-frame[data-current] {
+  z-index: 1;
+  opacity: 1;
+}
+
+/* Time, chapter number and chapter title, above the current frame. */
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-frame-strip-label {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  /* transform, not translate: the reduced-motion and high-visibility blocks switch `translate` off. */
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  max-width: 100%;
+  padding: 3px 9px;
+  border-radius: 99px;
+  font-size: 12px;
+  line-height: 1.3;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+  pointer-events: none;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-frame-strip-label > [hidden] {
+  display: none;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] :is(.media-frame-strip-label-chapter, .media-frame-strip-label-title)::before {
+  content: "\00b7";
+  margin-inline-end: 6px;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-frame-strip-label-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (forced-colors: none) {
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-frame-strip-label {
+    background-color: rgb(0 0 0 / 0.78);
+    box-shadow: inset 0 0 0 1px var(--fs-hairline);
+  }
+}
+
+/* "Chapter N" in the single preview's label, which narrow players use. */
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider-chapter-number[hidden] {
+  display: none;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider-chapter-number::before {
+  content: "\00b7";
+  margin-inline-end: 6px;
+}
+
+/* Wide players: while the strip is open it is the preview, so the single preview steps aside. */
+@container media-root (width >= 30rem) {
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider[data-strip-open] .media-time-slider-preview {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none;
+  }
+}
+
+@container media-root (width < 30rem) {
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-frame-strip {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-frame-strip {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-frame-strip-label {
+    background-color: #000;
+  }
+}
+
+/* High visibility mode: the chapter number on every frame, a bigger label and a thicker ring. */
+.media-skin[data-theme="scaffold"][data-preset="video"]:is([data-a11y], [data-cvd]) .media-frame-strip-frame[data-chapter]::before,
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-frame-strip-frame[data-chapter-start][data-chapter]::before {
+  content: attr(data-chapter);
+  position: absolute;
+  top: 4px;
+  inset-inline-start: 4px;
+  min-width: 1.6em;
+  padding: 1px 5px;
+  border-radius: 99px;
+  background-color: #000;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.3;
+  text-align: center;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"][data-a11y] .media-frame-strip-label {
+  font-size: 14px;
+  background-color: #000;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"][data-a11y] .media-frame-strip-ring {
+  box-shadow: 0 0 0 3px #fff, 0 0 0 6px rgb(0 0 0 / 0.9);
+}
+
+@media (forced-colors: active) {
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-frame-strip,
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-frame-strip-label {
+    background-color: Canvas;
+    color: CanvasText;
+    border: 1px solid CanvasText;
+    box-shadow: none;
+  }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-frame-strip-frame {
+    outline: 1px solid CanvasText;
+    forced-color-adjust: none;
+  }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-frame-strip-ring {
+    box-shadow: none;
+    outline: 3px solid Highlight;
+    outline-offset: 1px;
+    forced-color-adjust: none;
+  }
+}
+
+/* =============================================================================================================
+   Calm motion (Settings > Display). Puts data-calm on the skin: no sliding, fading or growing. The loading spinner
+   still turns, because it shows that something is happening. High visibility already does the same without it.
+   ============================================================================================================= */
+
+.media-skin[data-theme="scaffold"][data-preset="video"][data-calm] *:not(.media-buffering-indicator, .media-buffering-indicator *) {
+  transition-duration: 0ms !important;
+  animation-duration: 0ms !important;
+  translate: none !important;
+  scale: none !important;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"][data-calm] .media-time-slider[data-dragging] .media-time-slider-thumb {
+  transform: translateX(-50%);
+}
+
+/* =============================================================================================================
+   Preview label. The picture can paint over a label that is only placed on top of it in the grid, so the label
+   is positioned and raised: time, chapter number and title stay readable in the single preview.
+   ============================================================================================================= */
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider-preview-meta {
+  position: relative;
+  z-index: 1;
+}
+
+/* =============================================================================================================
+   Skip buttons (Settings > Display > Skip buttons). Back and forward 10 seconds, right after Play. Hidden until
+   switched on so the baseline row is unchanged.
+   ============================================================================================================= */
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-skip { display: none; }
+.media-skin[data-theme="scaffold"][data-preset="video"][data-skip] .fs-skip { display: grid; }
+
+/* =============================================================================================================
+   Chapter numbers under the seek bar. Shown only in Colour-blind friendly mode. frame-strip.ts writes
+   data-n on each chapter segment, and data-tiny on segments too short to hold a number (those keep their place
+   on the bar and their number in the preview label).
+   ============================================================================================================= */
+
+.media-skin[data-theme="scaffold"][data-preset="video"][data-cvd] .media-time-slider-chapter[data-n]:not([data-tiny])::after {
+  content: attr(data-n);
+  position: absolute;
+  left: calc((var(--media-slider-chapter-start) + var(--media-slider-chapter-end)) / 2);
+  top: calc(50% + 10px);
+  transform: translateX(-50%);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+  pointer-events: none;
+}
+
+/* Colour-blind friendly: every second chapter is hatched, so neighbours differ by pattern as well as by hue. */
+@media (forced-colors: none) {
+  .media-skin[data-theme="scaffold"][data-preset="video"][data-cvd] .media-time-slider-chapter:nth-of-type(even) .media-time-slider-track::before,
+  .media-skin[data-theme="scaffold"][data-preset="video"][data-cvd] .media-time-slider-chapter:nth-of-type(even) .media-time-slider-fill {
+    background-image: repeating-linear-gradient(135deg, rgb(0 0 0 / 0.5) 0 3px, transparent 3px 7px);
+  }
+}
+
+/* =============================================================================================================
+   Bigger controls (Settings > Display > Bigger controls). Larger targets, icons and text, and a thicker seek bar.
+   ============================================================================================================= */
+
+.media-skin[data-theme="scaffold"][data-preset="video"][data-large] {
+  --fs-hit: 56px;
+}
+
+@container media-root (width < 30rem) {
+  .media-skin[data-theme="scaffold"][data-preset="video"][data-large] {
+    --fs-hit: 48px;
+  }
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"][data-large] :is(.media-button-icon, .media-button-icon-base) {
+  width: 24px;
+  height: 24px;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"][data-large] :is(.media-time-current-value, .media-time-duration-value) {
+  font-size: 16px;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"][data-large] :is(.media-menu-item, .media-menu-radio-item, .media-menu-back-item) {
+  font-size: 16px;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"][data-large] :is(.media-title, .media-time-slider-preview-label, .media-frame-strip-label) {
+  font-size: 14px;
+}
+
+@media (forced-colors: none) {
+  .media-skin[data-theme="scaffold"][data-preset="video"][data-large] .media-time-slider-track {
+    height: 8px;
+  }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"][data-large] .media-time-slider:is([data-dragging], :focus-within) .media-time-slider-track {
+    height: 12px;
+  }
+
+  @media (hover: hover) {
+    .media-skin[data-theme="scaffold"][data-preset="video"][data-large] .media-time-slider[data-pointing] .media-time-slider-track {
+      height: 12px;
+    }
+  }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"][data-large] .media-time-slider-thumb {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+/* =============================================================================================================
+   Dim screen (Settings > Display > Dim screen). A dimmer picture and softer controls. It lowers brightness; it does
+   not make flashing footage safe, and the README says so.
+   ============================================================================================================= */
+
+.media-skin[data-theme="scaffold"][data-preset="video"][data-dim] {
+  --fs-dim-filter: brightness(0.7) contrast(0.92);
+}
+
+/* Colour filters (Settings > Display > Filter: ...). The SVG filters are added to the page by display-options.ts. Dim
+   screen and a colour filter can be on together, so both go through one filter list. */
+.media-skin[data-theme="scaffold"][data-preset="video"][data-cvd-filter="protan"] { --fs-cvd-filter: url("#fs-filter-protan"); }
+.media-skin[data-theme="scaffold"][data-preset="video"][data-cvd-filter="deutan"] { --fs-cvd-filter: url("#fs-filter-deutan"); }
+.media-skin[data-theme="scaffold"][data-preset="video"][data-cvd-filter="tritan"] { --fs-cvd-filter: url("#fs-filter-tritan"); }
+
+.media-skin[data-theme="scaffold"][data-preset="video"]:is([data-dim], [data-cvd-filter]) :is(mux-video, video, media-poster, .media-slider-thumbnail, .media-frame-strip-frames, .fs-sheet-frame) {
+  filter: var(--fs-dim-filter, opacity(1)) var(--fs-cvd-filter, opacity(1));
+}
+
+/* The chapter colours are re-mapped too, so the bar and the picture agree. */
+.media-skin[data-theme="scaffold"][data-preset="video"][data-cvd-filter] .media-time-slider-chapters {
+  filter: var(--fs-cvd-filter);
+}
+
+@media (forced-colors: none) {
+  .media-skin[data-theme="scaffold"][data-preset="video"][data-dim] {
+    --fs-text-soft: rgb(255 255 255 / 0.62);
+  }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"][data-dim] :is(.video-controls-bottom, .media-title, .media-menu-popup) {
+    color: #d4d4d4;
+  }
+}
+
+/* =============================================================================================================
+   Hide frame previews (Settings > Display > Hide frame previews). No frame strip and no picture in the single
+   preview; the time, chapter number and title still show. Seeking is unchanged.
+   ============================================================================================================= */
+
+.media-skin[data-theme="scaffold"][data-preset="video"][data-nopreview] .media-frame-strip {
+  display: none !important;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"][data-nopreview] .media-slider-thumbnail {
+  display: none;
+}
+
+/* Forced colours: the new chapter numbers use system colours. */
+@media (forced-colors: active) {
+  .media-skin[data-theme="scaffold"][data-preset="video"][data-cvd] .media-time-slider-chapter[data-n]:not([data-tiny])::after {
+    color: CanvasText;
+  }
+}
+
+/* A long Display menu scrolls inside the popup instead of running off a short player. */
+.media-skin[data-theme="scaffold"][data-preset="video"] #fs-display-content {
+  max-height: min(24rem, 70vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* =============================================================================================================
+   The strip, more concrete: a ring that glides to the current frame, a notch and a chapter number where each
+   chapter starts, and a label printed like film edge markings.
+   ============================================================================================================= */
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-frame-strip-frames {
+  position: relative;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-frame-strip-ring {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  z-index: 2;
+  border-radius: var(--fs-button-radius);
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px rgb(0 0 0 / 0.75);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-frame-strip-ring {
+    transition: transform 140ms ease-out, width 140ms ease-out, height 140ms ease-out;
+  }
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-frame-strip-ring[data-still] {
+  transition: none !important;
+}
+
+/* Where a chapter starts: a notch across the gap, and the chapter number on that frame. */
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-frame-strip-frame[data-notch]::after {
+  content: "";
+  position: absolute;
+  top: -6px;
+  bottom: -6px;
+  inset-inline-start: -3px;
+  width: 2px;
+  border-radius: 1px;
+  background-color: #fff;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.6);
+  pointer-events: none;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-frame-strip-label {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+@media (forced-colors: active) {
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-frame-strip-frame[data-notch]::after {
+    background-color: CanvasText;
+    box-shadow: none;
+  }
+}
+
+/* =============================================================================================================
+   Centered panels: Display and Browse frames. They sit in the middle of the player, over a dimmed background, and
+   use the strip's own marks: film frames with sprocket holes and edge numbers, and the double ring for "this one".
+   ============================================================================================================= */
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 12px;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-overlay[hidden] {
+  display: none;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-scrim {
+  position: absolute;
+  inset: 0;
+  background-color: rgb(0 0 0 / 0.66);
+  backdrop-filter: blur(3px);
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-panel {
+  position: relative;
+  box-sizing: border-box;
+  width: min(46rem, 100%);
+  max-height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 16px;
+  border: 1px solid var(--fs-hairline);
+  border-radius: var(--fs-row-radius);
+  background-color: var(--fs-surface-solid);
+  box-shadow: var(--fs-shadow);
+  color: #fff;
+  font-size: 14px;
+  line-height: 1.35;
+  counter-reset: fs-tile;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-sheet {
+  width: min(54rem, 100%);
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-panel-head {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-panel-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  outline: none;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-panel-note {
+  margin: 6px 0 12px;
+  color: var(--fs-text-soft);
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-group-title {
+  margin: 16px 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fs-text-soft);
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] :is(.fs-done, .fs-reset, .fs-preset, .fs-sheet-chapter) {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1.5px solid rgb(255 255 255 / 0.5);
+  border-radius: var(--fs-button-radius);
+  background-color: transparent;
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-done {
+  background-color: #fff;
+  border-color: #fff;
+  color: #000;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] :is(.fs-reset, .fs-preset, .fs-sheet-chapter):hover {
+  background-color: var(--fs-hover);
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-sheet-chapters {
+  display: grid;
+  gap: 8px;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-sheet-chapter {
+  text-align: start;
+}
+
+/* The frames of the reel. */
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-reel {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+  gap: 10px;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-tile {
+  counter-increment: fs-tile;
+  position: relative;
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  padding: 16px 8px 16px;
+  border: 1px solid var(--fs-hairline);
+  border-radius: var(--fs-button-radius);
+  background-color: #0a0a0c;
+  color: #fff;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+/* Sprocket holes along the top and bottom edge of each frame. */
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-tile::before,
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-tile::after {
+  content: "";
+  position: absolute;
+  inset-inline: 8px;
+  height: 5px;
+  border-radius: 2px;
+  background-image: repeating-linear-gradient(90deg, rgb(255 255 255 / 0.7) 0 6px, transparent 6px 12px);
+  pointer-events: none;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-tile::before {
+  top: 5px;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-tile::after {
+  bottom: 5px;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-tile:hover {
+  background-color: #151519;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-tile-frame {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: 6px;
+  background-color: #111;
+}
+
+/* The film edge number, like the print along the edge of a roll. */
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-tile-frame::before {
+  content: counter(fs-tile, decimal-leading-zero);
+  position: absolute;
+  top: 4px;
+  inset-inline-end: 6px;
+  z-index: 1;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.12em;
+  color: #fff;
+  text-shadow: 0 0 3px #000, 0 0 3px #000;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-tile-picture {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background-color: #2a2a30;
+  background-image: linear-gradient(135deg, #3c3c44, #1c1c20);
+  background-repeat: no-repeat;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-tile-picture[data-ready] {
+  background-color: #111;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-tile[data-sample="protan"] .fs-tile-picture { filter: url("#fs-filter-protan"); }
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-tile[data-sample="deutan"] .fs-tile-picture { filter: url("#fs-filter-deutan"); }
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-tile[data-sample="tritan"] .fs-tile-picture { filter: url("#fs-filter-tritan"); }
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-tile[data-sample="dim"] .fs-tile-picture { filter: brightness(0.7) contrast(0.92); }
+
+/* What each option adds to the picture, drawn small. */
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-tile-sample {
+  position: absolute;
+  inset: auto 6px 6px;
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-tile-sample i {
+  min-width: 1.9em;
+  padding: 3px 6px;
+  border-radius: 99px;
+  background-color: #000;
+  color: #fff;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-tile[data-sample="hv"] .fs-tile-frame {
+  outline: 3px solid #fff;
+  outline-offset: -3px;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-tile[data-sample="hv"] .fs-tile-sample i {
+  border: 2px solid #fff;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-tile[data-sample="cb"] .fs-tile-sample i:nth-child(even) {
+  background-image: repeating-linear-gradient(135deg, rgb(255 255 255 / 0.4) 0 2px, transparent 2px 5px);
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-tile[data-sample="large"] .fs-tile-sample i {
+  min-width: 2.4em;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-size: 16px;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-tile-name {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-tile-hint {
+  color: var(--fs-text-soft);
+  font-size: 12.5px;
+}
+
+/* On and Off as words, a check and the double ring: never colour alone. */
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-tile-state {
+  justify-self: start;
+  padding: 2px 10px;
+  border: 1.5px solid rgb(255 255 255 / 0.5);
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-tile[aria-checked="true"] .fs-tile-frame {
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px rgb(0 0 0 / 0.75);
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-tile[aria-checked="true"] .fs-tile-state {
+  border-color: #fff;
+  background-color: #fff;
+  color: #000;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-tile[aria-checked="true"] .fs-tile-state::before {
+  content: "\2713\00a0";
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-panel-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-top: 16px;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-panel-status {
+  margin: 0;
+  color: var(--fs-text-soft);
+}
+
+/* The frame browser. */
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-sheet-body {
+  display: grid;
+  gap: 16px;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-sheet-heading {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-sheet-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr));
+  gap: 6px;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-sheet-frame {
+  position: relative;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background-color: #111;
+  background-repeat: no-repeat;
+  cursor: pointer;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-sheet-frame:hover {
+  box-shadow: 0 0 0 2px #fff;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-sheet-frame[aria-current="true"] {
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px rgb(0 0 0 / 0.75);
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-sheet-time {
+  position: absolute;
+  inset-block-end: 4px;
+  inset-inline-start: 4px;
+  padding: 2px 6px;
+  border-radius: 99px;
+  background-color: #000;
+  color: #fff;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* A focus ring that holds over any picture, the same as in High visibility. */
+.media-skin[data-theme="scaffold"][data-preset="video"] :is(.fs-tile, .fs-preset, .fs-done, .fs-reset, .fs-sheet-frame, .fs-sheet-chapter):focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 6px rgb(0 0 0 / 0.9);
+}
+
+/* Bigger controls make the panels bigger too. */
+.media-skin[data-theme="scaffold"][data-preset="video"][data-large] :is(.fs-done, .fs-reset, .fs-preset, .fs-sheet-chapter) {
+  min-height: 56px;
+  font-size: 17px;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"][data-large] .fs-tile-name { font-size: 17px; }
+.media-skin[data-theme="scaffold"][data-preset="video"][data-large] .fs-tile-hint { font-size: 15px; }
+.media-skin[data-theme="scaffold"][data-preset="video"][data-large] .fs-panel { font-size: 16px; }
+
+@container media-root (width < 30rem) {
+  .media-skin[data-theme="scaffold"][data-preset="video"] .fs-panel {
+    padding: 12px;
+  }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"] .fs-reel {
+    grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
+  }
+}
+
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .media-skin[data-theme="scaffold"][data-preset="video"] .fs-scrim {
+    background-color: rgb(0 0 0 / 0.9);
+    backdrop-filter: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .media-skin[data-theme="scaffold"][data-preset="video"] .fs-scrim {
+    background-color: Canvas;
+    opacity: 0.85;
+  }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"] .fs-panel {
+    border: 2px solid CanvasText;
+    background-color: Canvas;
+    color: CanvasText;
+    box-shadow: none;
+  }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"] :is(.fs-tile, .fs-preset, .fs-done, .fs-reset, .fs-sheet-frame, .fs-sheet-chapter) {
+    border: 1px solid ButtonText;
+    background-color: ButtonFace;
+    color: ButtonText;
+    forced-color-adjust: none;
+  }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"] .fs-tile[aria-checked="true"] {
+    outline: 3px solid Highlight;
+  }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"] .fs-tile[aria-checked="true"] .fs-tile-frame,
+  .media-skin[data-theme="scaffold"][data-preset="video"] .fs-sheet-frame[aria-current="true"] {
+    box-shadow: none;
+    outline: 3px solid Highlight;
+  }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"] :is(.fs-tile, .fs-preset, .fs-done, .fs-reset, .fs-sheet-frame, .fs-sheet-chapter):focus-visible {
+    outline: 3px solid Highlight;
+    box-shadow: none;
+  }
+}
+
+/* =============================================================================================================
+   Chapter colours on the new parts. Anything with data-slot (1 to 8) takes the hue of that chapter on the seek bar:
+   the strip's frames, the label chip, the colour rainbow in the Display panel, the option frames and the frame
+   browser. Colour is the style here, never the only signal: a number, a word or a shape says the same thing, and the
+   chip text is black on the light hue, which holds well above 4.5:1 for all eight.
+   ============================================================================================================= */
+
+@media (forced-colors: none) {
+  .media-skin[data-theme="scaffold"][data-preset="video"] [data-slot="1"] { --fs-h: 250; }
+  .media-skin[data-theme="scaffold"][data-preset="video"] [data-slot="2"] { --fs-h: 200; }
+  .media-skin[data-theme="scaffold"][data-preset="video"] [data-slot="3"] { --fs-h: 155; }
+  .media-skin[data-theme="scaffold"][data-preset="video"] [data-slot="4"] { --fs-h: 100; }
+  .media-skin[data-theme="scaffold"][data-preset="video"] [data-slot="5"] { --fs-h: 60; }
+  .media-skin[data-theme="scaffold"][data-preset="video"] [data-slot="6"] { --fs-h: 20; }
+  .media-skin[data-theme="scaffold"][data-preset="video"] [data-slot="7"] { --fs-h: 340; }
+  .media-skin[data-theme="scaffold"][data-preset="video"] [data-slot="8"] { --fs-h: 295; }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"] [data-slot] {
+    --fs-c: oklch(0.78 0.14 var(--fs-h));
+  }
+
+  /* The strip: a tab of the chapter colour along the bottom of every frame, and a coloured number on chapter starts. */
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-frame-strip-frame[data-slot] {
+    box-shadow: inset 0 -5px 0 var(--fs-c);
+  }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-frame-strip-frame[data-slot][data-chapter]::before {
+    background-color: var(--fs-c);
+    color: #000;
+    box-shadow: 0 0 0 1.5px rgb(0 0 0 / 0.7);
+  }
+
+  /* The label: the chapter number sits in a chip of its colour, in the strip label and the single preview. */
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-frame-strip-label[data-slot] .media-frame-strip-label-chapter,
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider-chapter-number[data-slot] {
+    padding: 1px 8px;
+    border-radius: 99px;
+    background-color: var(--fs-c);
+    color: #000;
+    font-weight: 700;
+  }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-frame-strip-label[data-slot] .media-frame-strip-label-chapter::before,
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-time-slider-chapter-number[data-slot]::before {
+    content: none;
+  }
+
+  /* The option frames: coloured sprocket holes and edge number, and the chosen state filled with its colour. */
+  .media-skin[data-theme="scaffold"][data-preset="video"] .fs-tile[data-slot]::before,
+  .media-skin[data-theme="scaffold"][data-preset="video"] .fs-tile[data-slot]::after {
+    background-image: repeating-linear-gradient(90deg, var(--fs-c) 0 6px, transparent 6px 12px);
+  }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"] .fs-tile[data-slot] .fs-tile-frame::before {
+    color: var(--fs-c);
+  }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"] .fs-tile[data-slot][aria-checked="true"] .fs-tile-state {
+    border-color: var(--fs-c);
+    background-color: var(--fs-c);
+  }
+
+  /* The frame browser: a colour bar on each chapter heading and a colour tab on each frame. */
+  .media-skin[data-theme="scaffold"][data-preset="video"] .fs-sheet-heading[data-slot] {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"] .fs-sheet-heading[data-slot]::before {
+    content: "";
+    flex: none;
+    width: 28px;
+    height: 8px;
+    border-radius: 99px;
+    background-color: var(--fs-c);
+  }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"] .fs-sheet-grid[data-slot] .fs-sheet-frame::after {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    height: 5px;
+    border-radius: 0 0 6px 6px;
+    background-color: var(--fs-c);
+  }
+}
+
+/* The Display panel's rainbow: the real chapters at their real lengths. */
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-rainbow-wrap {
+  margin: 4px 0 14px;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-rainbow-wrap[hidden] {
+  display: none;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-rainbow {
+  display: flex;
+  gap: 3px;
+  align-items: flex-start;
+  height: 14px;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-rainbow-seg {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 4px;
+  height: 14px;
+  border-radius: 99px;
+  background-color: var(--fs-c, ButtonText);
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-rainbow-seg b {
+  display: none;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-rainbow-caption {
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  color: var(--fs-text-soft);
+}
+
+/* Colour-blind friendly: the numbers and the pattern appear on the rainbow, as on the seek bar. */
+.media-skin[data-theme="scaffold"][data-preset="video"][data-cvd] .fs-rainbow {
+  height: 34px;
+  gap: 4px;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"][data-cvd] .fs-rainbow-seg b {
+  display: block;
+  position: absolute;
+  top: 19px;
+  inset-inline-start: 50%;
+  transform: translateX(-50%);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"][data-cvd] .fs-rainbow-seg[data-tiny] b {
+  display: none;
+}
+
+@media (forced-colors: none) {
+  .media-skin[data-theme="scaffold"][data-preset="video"][data-cvd] .fs-rainbow-seg:nth-child(even) {
+    background-image: repeating-linear-gradient(135deg, rgb(0 0 0 / 0.5) 0 3px, transparent 3px 7px);
+  }
+
+  /* A colour filter shifts the rainbow, as it shifts the picture and the seek bar. */
+  .media-skin[data-theme="scaffold"][data-preset="video"][data-cvd-filter] .fs-rainbow {
+    filter: var(--fs-cvd-filter);
+  }
+}
+
+@media (forced-colors: active) {
+  .media-skin[data-theme="scaffold"][data-preset="video"] .fs-rainbow-seg b {
+    display: block;
+    position: absolute;
+    top: 19px;
+    inset-inline-start: 50%;
+    transform: translateX(-50%);
+    font-size: 12px;
+    line-height: 1;
+    color: CanvasText;
+  }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"] .fs-rainbow {
+    height: 34px;
+  }
+
+  .media-skin[data-theme="scaffold"][data-preset="video"] .fs-rainbow-seg {
+    forced-color-adjust: none;
+    background-color: ButtonText;
+  }
+}
+
+
+/* =============================================================================================================
+   Top corners and the film-strip edge.
+   Frames and Display sit at the top right with words, so the accessibility features are the first thing seen and the
+   bottom row is only for playing. They are for wide players; narrow players keep them in the Settings menu.
+   ============================================================================================================= */
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-top-open {
+  width: auto;
+  grid-auto-flow: column;
+  align-items: center;
+  gap: 8px;
+  padding-inline: 12px 14px;
+  margin-inline-start: 8px;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .fs-top-label {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* In the Settings menu these two rows are only needed when the top buttons are not shown. */
+@container media-root (width >= 30rem) {
+  .media-skin[data-theme="scaffold"][data-preset="video"] .fs-menu-narrow {
+    display: none !important;
+  }
+}
+
+/* Film edge: small holes along the top and bottom of the hover strip, like the edge of a roll of film. They sit in
+   the strip's own padding. Decorative, and gone in High visibility and forced colours. */
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-frame-strip {
+  padding-block: 11px;
+  background-image:
+    repeating-linear-gradient(90deg, rgb(255 255 255 / 0.5) 0 5px, transparent 5px 11px),
+    repeating-linear-gradient(90deg, rgb(255 255 255 / 0.5) 0 5px, transparent 5px 11px);
+  background-size: calc(100% - 20px) 3px, calc(100% - 20px) 3px;
+  background-position: 10px 4px, 10px calc(100% - 4px);
+  background-repeat: no-repeat;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"][data-a11y] .media-frame-strip {
+  background-image: none;
+  padding-block: var(--fs-row-padding);
+}
+
+@media (forced-colors: active) {
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-frame-strip {
+    background-image: none;
+    padding-block: var(--fs-row-padding);
+  }
+}
+
+
+/* =============================================================================================================
+   Captions button: always there, greyed out when the video has no captions.
+   captions-state.ts marks the button with data-no-captions. It stays in its slot (wide row or narrow top row), but
+   it is dimmed, flat and crossed through, so it is not read as a control and not by colour alone. Disabled controls
+   are exempt from contrast rules, and it is also taken out of the tab order and ignores clicks.
+   ============================================================================================================= */
+
+@container media-root (width >= 30rem) {
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-captions-button.fs-wide-only[data-no-captions] {
+    display: grid !important;
+  }
+}
+
+@container media-root (width < 30rem) {
+  .media-skin[data-theme="scaffold"][data-preset="video"] .media-captions-button.fs-narrow-only[data-no-captions] {
+    display: grid !important;
+  }
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-captions-button[data-no-captions] {
+  position: relative;
+  opacity: 0.4;
+  cursor: default;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-captions-button[data-no-captions]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 24px;
+  height: 2px;
+  border-radius: 1px;
+  background-color: currentColor;
+  rotate: -45deg;
+  pointer-events: none;
+}
+
+/* The Captions row in Settings is left out when there is nothing to choose. */
+.media-skin[data-theme="scaffold"][data-preset="video"] .media-menu-item[data-no-captions] {
+  display: none !important;
 }

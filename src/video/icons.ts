@@ -30,6 +30,12 @@ export const frameStripIcons = {
   'fullscreen-exit': svg(
     line('M9 4v3a2 2 0 0 1-2 2H4M20 9h-3a2 2 0 0 1-2-2V4M15 20v-3a2 2 0 0 1 2-2h3M4 15h3a2 2 0 0 1 2 2v3', 2.6)
   ),
+  display: svg(
+    '<path fill-rule="evenodd" d="M12 5c-4.6 0-8 3.6-9.6 6.4a1.3 1.3 0 0 0 0 1.2C4 15.4 7.4 19 12 19s8-3.6 9.6-6.4a1.3 1.3 0 0 0 0-1.2C20 8.6 16.6 5 12 5zm0 3.2a3.8 3.8 0 1 1 0 7.6 3.8 3.8 0 0 1 0-7.6z"/><circle cx="12" cy="12" r="1.7"/>'
+  ),
+  frames: svg(
+    '<rect x="3" y="4" width="8" height="7" rx="1.6"/><rect x="13" y="4" width="8" height="7" rx="1.6"/><rect x="3" y="13" width="8" height="7" rx="1.6"/><rect x="13" y="13" width="8" height="7" rx="1.6"/>'
+  ),
   gear: svg(
     `${line('M4 7h7.6M11.4 12H20M4 17h6.6M17.4 17H20', 2.2)}<circle cx="15" cy="7" r="2.4"/><circle cx="8" cy="12" r="2.4"/><circle cx="14" cy="17" r="2.4"/>`
   ),
