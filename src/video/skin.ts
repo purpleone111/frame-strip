@@ -6,6 +6,7 @@ import './display-options';
 import './display-panel';
 import './contact-sheet';
 import './captions-state';
+import './auto-chapters';
 import { frameStripIcons } from './icons';
 import '@videojs/html/i18n';
 import '@videojs/html/ui/container';

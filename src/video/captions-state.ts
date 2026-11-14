@@ -12,7 +12,13 @@
  *   - marks the Captions row in the Settings menu, which the CSS hides.
  *
  * A video that does have captions is left exactly as Video.js has it.
+ *
+ * It also offers "Add captions file…" in the Settings menu, for every video. The person picks a .vtt (or .srt) file
+ * from their own device; it is read in the browser, added to the media as a captions track and switched on. Nothing
+ * is uploaded. Picking another file replaces the one added before.
  */
+
+import { findMedia } from './film';
 
 const BUTTON = '.media-captions-button';
 const OFF = '[data-no-captions]';
@@ -21,6 +27,12 @@ export class CaptionsStateElement extends HTMLElement {
   #abort: AbortController | null = null;
   #observer: MutationObserver | null = null;
   #root: HTMLElement | null = null;
+  #media: HTMLMediaElement | null = null;
+  #input: HTMLInputElement | null = null;
+  #userTrack: HTMLTrackElement | null = null;
+  #userUrl: string | null = null;
+  #userLabel = '';
+  #resetTimer = 0;
 
   connectedCallback(): void {
     this.hidden = true;
@@ -50,6 +62,39 @@ export class CaptionsStateElement extends HTMLElement {
     root.addEventListener('click', block, { capture: true, signal });
     root.addEventListener('keydown', block, { capture: true, signal });
 
+    // The "Add captions file…" row opens a hidden file picker.
+    const input = document.createElement('input');
+
+    input.type = 'file';
+    input.accept = '.vtt,.srt,text/vtt';
+    input.hidden = true;
+    input.tabIndex = -1;
+    input.setAttribute('aria-hidden', 'true');
+    input.addEventListener('change', () => void this.#load(input), { signal });
+    root.append(input);
+    this.#input = input;
+
+    root.addEventListener(
+      'click',
+      (event) => {
+        if ((event.target as Element | null)?.closest('[data-fs-add-captions]')) input.click();
+      },
+      { signal }
+    );
+
+    root.addEventListener(
+      'keydown',
+      (event) => {
+        const key = (event as KeyboardEvent).key;
+
+        if ((key === 'Enter' || key === ' ') && (event.target as Element | null)?.closest('[data-fs-add-captions]')) {
+          event.preventDefault();
+          input.click();
+        }
+      },
+      { signal }
+    );
+
     this.#observer = new MutationObserver(() => this.#sync());
     this.#observer.observe(root, { subtree: true, attributes: true, childList: true, attributeFilter: ['hidden', 'data-availability'] });
 
@@ -61,6 +106,144 @@ export class CaptionsStateElement extends HTMLElement {
     this.#abort = null;
     this.#observer?.disconnect();
     this.#observer = null;
+    this.#unbind();
+    this.#input?.remove();
+    this.#input = null;
+    this.#forgetUserTrack();
+    window.clearTimeout(this.#resetTimer);
+  }
+
+  readonly #onTracks = (): void => {
+    this.#enableUserTrack();
+    this.#sync();
+  };
+
+  /** Listens to the media's text tracks, so the button follows captions that arrive late (streams add them after load). */
+  #bind(media: HTMLMediaElement | null): void {
+    if (media === this.#media) return;
+
+    this.#unbind();
+    this.#media = media;
+
+    if (!media) return;
+
+    media.textTracks?.addEventListener('addtrack', this.#onTracks);
+    media.textTracks?.addEventListener('removetrack', this.#onTracks);
+    media.addEventListener('loadedmetadata', this.#onTracks);
+  }
+
+  #unbind(): void {
+    const media = this.#media;
+
+    media?.textTracks?.removeEventListener('addtrack', this.#onTracks);
+    media?.textTracks?.removeEventListener('removetrack', this.#onTracks);
+    media?.removeEventListener('loadedmetadata', this.#onTracks);
+    this.#media = null;
+  }
+
+  #hasCaptionTracks(): boolean {
+    const tracks = this.#media?.textTracks;
+
+    if (!tracks) return false;
+
+    for (let i = 0; i < tracks.length; i += 1) {
+      const kind = tracks[i]?.kind;
+
+      if (kind === 'captions' || kind === 'subtitles') return true;
+    }
+
+    return false;
+  }
+
+  #forgetUserTrack(): void {
+    this.#userTrack?.remove();
+    this.#userTrack = null;
+
+    if (this.#userUrl) URL.revokeObjectURL(this.#userUrl);
+
+    this.#userUrl = null;
+    this.#userLabel = '';
+  }
+
+  #enableUserTrack(): void {
+    const tracks = this.#media?.textTracks;
+
+    if (!tracks || !this.#userLabel) return;
+
+    for (let i = 0; i < tracks.length; i += 1) {
+      const track = tracks[i];
+
+      if (track && track.label === this.#userLabel && track.mode !== 'showing') track.mode = 'showing';
+    }
+  }
+
+  #say(text: string, revert: boolean): void {
+    const label = this.#root?.querySelector<HTMLElement>('[data-fs-add-captions] [data-fs-add-label]');
+
+    if (!label) return;
+
+    label.textContent = text;
+    window.clearTimeout(this.#resetTimer);
+
+    if (revert) {
+      this.#resetTimer = window.setTimeout(() => {
+        label.textContent = this.#userTrack ? 'Replace captions file…' : 'Add captions file…';
+      }, 4000);
+    }
+  }
+
+  async #load(input: HTMLInputElement): Promise<void> {
+    const file = input.files?.[0];
+
+    input.value = '';
+
+    const media = findMedia(this);
+
+    if (!file || !media) return;
+
+    if (file.size > 2_000_000) {
+      this.#say('That file is too large', true);
+
+      return;
+    }
+
+    let text = '';
+
+    try {
+      text = await file.text();
+    } catch {
+      this.#say('Could not read that file', true);
+
+      return;
+    }
+
+    const vtt = toVtt(text);
+
+    if (!vtt) {
+      this.#say('Not a captions file', true);
+
+      return;
+    }
+
+    this.#forgetUserTrack();
+
+    const label = file.name.replace(/\.(vtt|srt)$/i, '') || 'Captions';
+    const url = URL.createObjectURL(new Blob([vtt], { type: 'text/vtt' }));
+    const track = document.createElement('track');
+
+    track.kind = 'captions';
+    track.label = label;
+    track.srclang = 'und';
+    track.src = url;
+    track.default = true;
+    this.#userTrack = track;
+    this.#userUrl = url;
+    this.#userLabel = label;
+    media.append(track);
+    this.#bind(media);
+    this.#say('Replace captions file…', false);
+    this.#enableUserTrack();
+    this.#sync();
   }
 
   #sync(): void {
@@ -68,12 +251,23 @@ export class CaptionsStateElement extends HTMLElement {
 
     if (!root) return;
 
-    const flagged = root.closest('video-player')?.hasAttribute('data-no-captions') ?? false;
+    this.#bind(findMedia(this));
+
+    // Captions the person added themselves count as captions, whatever the player was told about the clip.
+    const added = this.#userTrack !== null;
+    const flagged = !added && (root.closest('video-player')?.hasAttribute('data-no-captions') ?? false);
+    const tracks = this.#hasCaptionTracks();
     let none = true;
 
     for (const button of root.querySelectorAll<HTMLElement>(BUTTON)) {
       const availability = button.getAttribute('data-availability');
-      const off = flagged || button.hasAttribute('hidden') || availability === 'unavailable' || availability === 'unsupported';
+      const off =
+        !added &&
+        (flagged ||
+          button.hasAttribute('hidden') ||
+          availability === 'unavailable' ||
+          availability === 'unsupported' ||
+          (!tracks && availability !== 'available'));
 
       this.#mark(button, off, true);
 
@@ -110,6 +304,20 @@ export class CaptionsStateElement extends HTMLElement {
       }
     }
   }
+}
+
+/** Turns a .vtt or .srt file's text into WebVTT, or null when it is neither. */
+function toVtt(text: string): string | null {
+  const clean = text.replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n');
+
+  if (clean.startsWith('WEBVTT')) return clean;
+
+  // SRT: "00:00:01,000 --> 00:00:02,500". WebVTT wants a dot, and a WEBVTT line first.
+  if (/\d{1,2}:\d{2}:\d{2}[,.]\d{3}\s*-->\s*\d{1,2}:\d{2}:\d{2}[,.]\d{3}/.test(clean)) {
+    return `WEBVTT\n\n${clean.replace(/(\d{1,2}:\d{2}:\d{2}),(\d{3})/g, '$1.$2')}`;
+  }
+
+  return null;
 }
 
 if (!customElements.get('fs-captions-state')) customElements.define('fs-captions-state', CaptionsStateElement);
