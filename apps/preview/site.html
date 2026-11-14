@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Frame Strip | A Video.js skin by Abhi Tundel</title>
+    <meta
+      name="description"
+      content="Frame Strip is a Video.js 10 skin. Scrub by what you see, with display options for low vision, colour-blindness, light sensitivity and easier pressing."
+    />
+    <meta name="theme-color" content="#0a0a0b" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap"
+    />
+    <meta property="og:title" content="Frame Strip | A Video.js skin" />
+    <meta property="og:description" content="Scrub by what you see. A Video.js 10 skin by Abhi Tundel." />
+    <meta property="og:type" content="website" />
+  </head>
+  <body>
+    <a class="skip" href="#player">Skip to the player</a>
+
+    <header class="site-head wrap">
+      <a class="wordmark" href="#top">
+        <svg viewBox="0 0 209 209" width="18" height="18" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+          <path fill="#ffa81b" d="M0 0h209v209H0z" />
+          <path fill="#ff6200" d="M0 80h209v129H0z" />
+          <path fill="#eb3132" d="M0 142h209v67H0z" />
+          <path fill="#cc3566" d="M0 187h209v22H0z" />
+          <path d="M167.09 104.5L65.13 169.81V39.19l101.96 65.31z" fill="#ebe4c1" />
+        </svg>
+        Frame Strip
+      </a>
+      <nav aria-label="Page">
+        <a href="#player">Player</a>
+        <a href="#how">How it works</a>
+        <a href="#access">Access</a>
+        <a href="#custom">Make it yours</a>
+      </nav>
+    </header>
+
+    <main id="top">
+      <section class="hero wrap" aria-labelledby="title">
+        <p class="eyebrow">A Video.js 10 skin</p>
+        <h1 id="title">Scrub by what you <em>see.</em></h1>
+        <p class="lead">
+          Most players give you a time. Frame Strip gives you the picture. Hover the bar, see real frames from the film,
+          and land on the one you want.
+        </p>
+        <p class="hint">Try it: hover the bar &middot; press Tab &middot; open Display</p>
+      </section>
+
+      <section id="player" class="wrap player-section" aria-label="Player">
+        <div id="player-root"></div>
+        <noscript><p class="note">The player needs JavaScript.</p></noscript>
+      </section>
+
+      <div class="wrap"><div class="edge" aria-hidden="true"></div></div>
+
+      <section id="how" class="wrap section" aria-labelledby="how-title">
+        <p class="eyebrow">01 &middot; How it works</p>
+        <h2 id="how-title">Three things to <em>try.</em></h2>
+        <ol class="steps">
+          <li class="step" style="--hue: 250">
+            <span class="step-no">01</span>
+            <h3>See</h3>
+            <p>
+              Hover or focus the seek bar and it opens into a strip of real frames, coloured by chapter, with a larger
+              preview above it.
+            </p>
+          </li>
+          <li class="step" style="--hue: 200">
+            <span class="step-no">02</span>
+            <h3>Browse</h3>
+            <p>Frames opens every frame at once, grouped by chapter. Pick one and the film jumps there.</p>
+          </li>
+          <li class="step" style="--hue: 155">
+            <span class="step-no">03</span>
+            <h3>Adjust</h3>
+            <p>
+              Display changes how the player looks and moves: four presets, then ten options you can mix. Your choices
+              stay on your device.
+            </p>
+          </li>
+        </ol>
+      </section>
+
+      <section id="access" class="wrap section" aria-labelledby="access-title">
+        <p class="eyebrow">02 &middot; Access</p>
+        <h2 id="access-title">Made for <em>everyone.</em></h2>
+        <p class="section-lead">Accessibility is where this skin gets its ideas. It is the starting point, not an extra.</p>
+        <ul class="facts">
+          <li><strong>Every control works by keyboard.</strong> Tab to move, the arrow keys to scrub, Escape to close a panel.</li>
+          <li><strong>Focus is always visible.</strong> A clear ring on every control.</li>
+          <li><strong>Targets of at least 44 px.</strong> Bigger controls are one tap away in Display.</li>
+          <li><strong>Colour is never the only cue.</strong> Chapters are numbered, spaced apart, and patterned in the colour-blind option.</li>
+          <li><strong>Four presets.</strong> Low vision, Colour-blind, Light-sensitive and Easier to press.</li>
+          <li><strong>It listens to your device.</strong> Reduced motion, reduced transparency, more contrast and forced colours are followed.</li>
+          <li><strong>Captions when there are captions.</strong> The button is always in place, and greyed out when a video has none.</li>
+          <li><strong>Private.</strong> What you pick is saved on this device and goes nowhere.</li>
+        </ul>
+        <p class="note">The colour filters are approximations. They are not a medical correction.</p>
+      </section>
+
+      <section id="custom" class="wrap section" aria-labelledby="custom-title">
+        <p class="eyebrow">03 &middot; Make it yours</p>
+        <h2 id="custom-title">Four properties. <em>Nothing</em> else to learn.</h2>
+        <p class="section-lead">Set them on any element around the player.</p>
+        <pre tabindex="0" aria-label="Example CSS"><code>.my-player {
+  --media-accent-color: oklch(0.78 0.14 250);
+  --media-accent-text-color: #0a0a0b;
+  --media-border-radius: 16px;
+  --media-font-family: Inter, system-ui, sans-serif;
+}</code></pre>
+      </section>
+
+      <!--
+        Turn this on once the skin is running on the portfolio, and not before.
+      <section class="wrap section" aria-labelledby="use-title">
+        <h2 id="use-title">In use</h2>
+        <p class="section-lead">The same skin plays the film on <a href="https://abhi.smolcatfilms.com">my portfolio</a>.</p>
+      </section>
+      -->
+    </main>
+
+    <footer class="site-foot wrap">
+      <div class="edge" aria-hidden="true"></div>
+      <p>
+        Built on <a href="https://videojs.org/">Video.js 10</a> and streamed by <a href="https://www.mux.com/">Mux</a>. I
+        designed it and built it with Claude, an AI coding assistant.
+      </p>
+      <p>
+        Sweater Whether, teaser. Film by Abhi Tundel, Smol Cat Films. The Video.js sample and Mux demo clips are sample
+        videos from the Video.js documentation.
+      </p>
+      <p>
+        Made in Goa, India by Abhi Tundel, Smol Cat Films. &copy; 2026. <a href="https://abhi.smolcatfilms.com">Portfolio</a> &middot;
+        <a href="mailto:abhi@smolcatfilms.com">abhi@smolcatfilms.com</a>
+      </p>
+    </footer>
+
+    <script type="module" src="/src/frame/site.ts"></script>
+  </body>
+</html>

@@ -11,7 +11,9 @@
     "deploy": "node apps/preview/deploy.mjs",
     "deploy:vercel": "npx --yes vercel@64 build && npx --yes vercel@64 deploy --prebuilt",
     "deploy:netlify": "npx --yes netlify-cli@27 deploy --build",
-    "deploy:cloudflare": "npm run build && npx --yes wrangler@4 pages deploy dist --project-name frame-strip"
+    "deploy:cloudflare": "npm run build && npx --yes wrangler@4 pages deploy dist --project-name frame-strip",
+    "build": "vite build",
+    "build:site": "vite build && node apps/preview/site-publish.mjs"
   },
   "dependencies": {
     "@videojs/html": "10.3.0"
